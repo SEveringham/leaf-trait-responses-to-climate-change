@@ -1,0 +1,91 @@
+---
+title: "leaf economics response to temp and precip"
+author: "Suz"
+date: "21 July 2020"
+output: html_document
+---
+
+libraries required
+
+```{r}
+library(metafor)
+library(ggplot2)
+library(gridExtra)
+```
+
+
+```{r}
+leafdata <- read.csv("leafdatafull.csv")
+```
+
+temperature vs leaf economics
+
+```{r}
+leafecnomicsvstemp <- rma(yi = PC1, vi = 1, mods = Changeavtemp, data = leafdata)
+
+summary(leafecnomicsvstemp)
+```
+
+leaf economics vs precip
+
+```{r}
+leafeconomicsvsprecip <- rma(yi=PC1, vi = 1, mods=Changeav, data = leafdata)
+summary(leafeconomicsvsprecip)
+```
+
+plot temp vs leaf economica PCA
+
+```{r}
+leafeconomicstempplot <- ggplot(leafdata, aes(Changeavtemp, PC1)) + 
+  geom_point(colour="lightsalmon3", size =4) + 
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_text(size=18))
+plot(leafeconomicstempplot)
+```
+
+plotting leaf economics vs mean precip
+
+```{r}
+leafeconomicsprecipplot <- ggplot(leafdata, aes(Changeav, PC1)) + 
+  geom_point(colour="lightsalmon3", size =4) + 
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  theme_bw() +
+  ylab("") +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_blank()) +
+  theme(axis.text.x = element_text(size=18))
+plot(leafeconomicsprecipplot)
+```
+
+Put plots together
+
+```{r}
+figure3 <- grid.arrange(leafeconomicstempplot, leafeconomicsprecipplot, ncol=2)
+```
+
+Save the double plot as a tiff
+
+```{r}
+ggsave(
+  "figure3.tiff",
+  plot=figure3,
+  device = "tiff",
+  width=16,
+  height=6,
+  dpi=200
+)
+```
+

@@ -1,0 +1,219 @@
+---
+title: "Analyses for two way regressions between leaf photosynthesis trait changes and change in mean temp/precip"
+author: "Suz Everingham"
+date: "16 June 2020"
+output: 
+  html_document:
+    keep_md: yes
+    fig_crop: no
+    highlight: zenburn
+    theme: flatly
+---
+
+Libraries required
+
+```{r, warning = FALSE, message = FALSE}
+library(metafor)
+library(ggplot2)
+library(gridExtra)
+```
+
+
+Read in main data file -  created in previous code: "reshaping data for leaf analysis"
+```{r}
+data <- read.csv("leafdatafull.csv")
+```
+
+Paired analyses:
+
+1. Photosynthetic rate vs mean temp and photosynthetic rate vs mean precip
+
+```{r, warning = FALSE}
+phototemp <- rma(yi=photoLRR.y, vi = photosynthesisvi, mods = Changeavtemp, data = data)
+```
+
+```{r}
+print(phototemp)
+```
+
+```{r, warning=FALSE}
+photoprecipt <- rma(yi=photoLRR.y, vi = photosynthesisvi, mods = Changeav, data = data)
+```
+
+```{r}
+print(photoprecipt)
+```
+
+2. stomata vs mean temp and stomata vs mean precip
+
+```{r, warning=FALSE}
+stomatatemp <- rma(yi=stomataLRR, vi = stomatavi, mods = Changeavtemp, data = data)
+```
+
+```{r}
+print(stomatatemp)
+```
+
+```{r, warning=FALSE}
+stomataprecipt <- rma(yi=stomataLRR, vi = stomatavi, mods = Changeav, data = data)
+```
+
+```{r}
+print(stomataprecipt)
+```
+
+3. water use efficiency vs mean temp and water use efficiency vs mean precip
+
+```{r, warning=FALSE}
+WUEtemp <- rma(yi=WUELRR, vi = WUEvi, mods = Changeavtemp, data = data)
+```
+
+```{r}
+print(WUEtemp)
+```
+
+```{r, warning=FALSE}
+WUEprecipt <- rma(yi=WUELRR, vi = WUEvi, mods = Changeav, data = data)
+```
+
+```{r}
+print(WUEprecipt)
+```
+
+Plotting relationships for figure 1
+- Plot each relationship individually of change in photosynthetic trait by change in mean temp and then again by change in mean precipitation
+- Colour scheme for thesis is lightsalmon3 and darkseagreen4
+- combine all plots together
+- save tiff
+
+
+1. Plots for both relationships for photosynthesis
+
+```{r, warning=FALSE, out.width=c('50%', '50%'), fig.show='hold'}
+sizephoto <- 1/sqrt(data$photosynthesisvi) ##to get the sizes for the points - based off variance from metafor for each within species change in trait
+
+phototempplot <- ggplot(data=data, aes(Changeavtemp, photoLRR.x)) + 
+  geom_point(colour="darkseagreen4", size=sizephoto*0.5) +
+    geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=15, x="", y="Change in photosynthetic rate ()") +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_blank())
+plot(phototempplot)
+
+photoprecipplot <- ggplot(data=data, aes(Changeav, photoLRR.x)) + 
+  geom_point(colour="darkseagreen4", size=sizephoto*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=8, x="", y="") +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text = element_blank())+
+  coord_cartesian(xlim=c(-0.35, 0.2))
+plot(photoprecipplot)
+```
+
+2. water use efficiency and mean temp and mean precip
+
+```{r, warning=FALSE, out.width=c('50%', '50%'), fig.show='hold'}
+sizeWUE <- 1/sqrt(data$WUEvi) ##to get the sizes for the points - based off variance from metafor for each within species change in trait
+
+WUEtempplot <- ggplot(data=data, aes(Changeavtemp, WUELRR)) + 
+  geom_point(colour="darkseagreen4", size=sizeWUE*0.5) +
+  labs(cex=15, x="", y="Change in water use efficiency (Âµmol COâ mmolâ»Â¹ HâO)") +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1))
+plot(WUEtempplot)
+
+WUEprecipplot <- ggplot(data=data, aes(Changeav, WUELRR)) + 
+  geom_point(colour="darkseagreen4", size=sizeWUE*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=8, x="", y="") +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text = element_blank()) +
+  coord_cartesian(xlim=c(-0.35, 0.2)) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1))
+plot(WUEprecipplot)
+```
+
+3. for stomatal density and mean temp and mean precip
+
+```{r, warning=FALSE, out.width=c('50%', '50%'), fig.show='hold'}
+sizestomata <- 1/sqrt(data$stomatavi) ##to get the sizes for the points - based off variance from metafor for each within species change in trait
+
+stomatatempplot <- ggplot(data=data, aes(Changeavtemp, stomataLRR)) + 
+  labs(cex=15, x="Change in mean temperature (Â°C)", y="Change in stomatal density (mmÂ²)") +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_point(colour="darkseagreen4", size=sizestomata*0.5) +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_text(size=18),
+        axis.title.x = element_text(size=20))
+plot(stomatatempplot)
+
+stomataprecipplot <- ggplot(data=data, aes(Changeav, stomataLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizestomata*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(x="Change in mean precipitation (mm)", y="") +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.x = element_text(size=18),
+        axis.text.y = element_blank(),
+        axis.title.x = element_text(size =20)) +
+  coord_cartesian(xlim=c(-0.35, 0.2))
+plot(stomataprecipplot)
+```
+
+Stitch all the plots together and save as a tiff file
+
+```{r, warning=FALSE}
+figure2 <- grid.arrange(phototempplot, photoprecipplot,
+                        WUEtempplot, WUEprecipplot,
+                        stomatatempplot, stomataprecipplot, ncol=2)
+
+ggsave(
+  "figure2.tiff",
+  plot=figure2,
+  device = "tiff",
+  width=12,
+  height=13,
+  dpi=200
+)
+```
+

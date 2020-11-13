@@ -1,0 +1,278 @@
+---
+title: "Analyses for two way regressions between leaf morphology and mean temp/precip"
+author: "Suz Everingham"
+date: "8 April 2020"
+output: 
+  html_document:
+    keep_md: yes
+    fig_crop: no
+    highlight: zenburn
+    theme: flatly
+  
+---
+
+Libraries required
+
+```{r, warning = FALSE, message=FALSE}
+library(metafor)
+library(ggplot2)
+library(gridExtra)
+```
+
+
+Read in main data file - created in previous code: "reshaping data for leaf analysis"
+```{r}
+leafdata <- read.csv("leafdatafull.csv")
+```
+
+Paired analyses:
+
+1. Leaf area vs mean temp // and Leaf area vs mean precip
+
+```{r, warning = FALSE, message=FALSE}
+leafareatemp <- rma(yi=areaLRR, vi = areavi, mods = Changeavtemp, data = leafdata)
+```
+
+```{r}
+print(leafareatemp)
+```
+
+```{r, warning = FALSE, message=FALSE}
+leafareaprecipt <- rma(yi=areaLRR, vi = areavi, mods = Changeav, data = leafdata)
+```
+
+```{r}
+print(leafareaprecipt)
+```
+
+2. Leaf roundness (width:length) vs mean temp // and leaf roundness (width:length) vs mean precip
+
+```{r, warning = FALSE, message=FALSE}
+leafroundtemp <- rma(yi=dimensionsLRR, vi = roundnessvi, mods = Changeavtemp, data = leafdata) ###for some silly reason I interchanged the words "dimensions" and "roundness" when creating the dataframe previously - they mean the same thing
+```
+*Note that in the analysis I named the log response ratio "dimensions" and the variance variable "roundness" but these are interchangeable words for the same thing*
+```{r}
+print(leafroundtemp)
+```
+
+```{r, warning = FALSE, message=FALSE}
+leafroundprecip <- rma(yi=dimensionsLRR, vi = roundnessvi, mods = Changeav, data = leafdata)
+```
+
+```{r}
+print(leafroundprecip)
+```
+
+3. Leaf margin complexity (area:perimter) vs mean temp // and leaf margin complexity (area:perimeter) vs mean precip
+
+```{r, warning = FALSE, message=FALSE}
+leafmargintemp <- rma(yi=marginLRR, vi = marginvi, mods = Changeavtemp, data = leafdata)
+```
+
+```{r}
+print(leafmargintemp)
+```
+
+```{r, warning = FALSE, message=FALSE}
+leafmarginprecip <- rma(yi=marginLRR, vi = marginvi, mods = Changeav, data = leafdata)
+```
+
+```{r}
+print(leafmarginprecip)
+```
+
+4. Leaf thickness vs mean temp // and leaf thickness vs mean precip
+
+```{r, warning = FALSE, message=FALSE}
+leafthicknesstemp <- rma(yi=thickLRR, vi = thicknessvi, mods = Changeavtemp, data = leafdata)
+```
+
+```{r}
+print(leafthicknesstemp)
+```
+
+```{r, warning = FALSE, message=FALSE}
+leafthicknessprecip <- rma(yi=thickLRR, vi = thicknessvi, mods = Changeav, data = leafdata)
+```
+
+```{r}
+print(leafthicknessprecip)
+```
+
+Plotting relationships for figure 1
+- Each relationship is plotted one by one between mean temperature and the leaf trait change metric and mean precipitation and the leaf trait change metric
+- Colour scheme for manuscript is lightsalmon3 and darkseagreen4
+- combine all plots together
+- save tiff
+
+
+1. Plots for both relationships for leaf surface area
+
+```{r,  warning = FALSE, out.width=c('50%', '50%'), fig.show='hold'}
+sizearea <- 1/sqrt(leafdata$areavi) ##to get the sizes for the points - based off variance from metafor for each within species change in trait
+
+leafareatempplot <- ggplot(leafdata, aes(Changeavtemp, areaLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizearea*0.5) + 
+  geom_abline(slope=-0.1073, intercept = -0.0620, colour="lightsalmon3", size = 2) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size= 1) +
+  labs(cex=15, x="", y="Change in leaf area (cm²)") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_blank())
+plot(leafareatempplot)
+
+leafareaprecipplot <- ggplot(leafdata, aes(Changeav, areaLRR)) + ##Changeav is change in average precipitation
+  geom_point(colour="darkseagreen4", size=sizearea*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=8, x="", y="") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text = element_blank())
+plot(leafareaprecipplot)
+```
+
+2. Plots for both relationships for leaf roundness
+
+```{r,  warning = FALSE, out.width=c('50%', '50%'), fig.show='hold'}
+sizeroundness <- 1/sqrt(leafdata$roundnessvi)
+
+roundnesstempplot <- ggplot(leafdata, aes(Changeavtemp, dimensionsLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizeroundness*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=15, x="", y= expression(paste("Change in leaf roundness ", italic(" width:length"), " (cm)"))) +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_blank())
+plot(roundnesstempplot)
+
+roundnessprecipplot <- ggplot(leafdata, aes(Changeav, dimensionsLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizeroundness*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=8, x="", y= "") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text = element_blank())
+plot(roundnessprecipplot)
+
+```
+
+3. Plots for both relationships for leaf margin complexity
+
+```{r, warning = FALSE, out.width=c('50%', '50%'), fig.show='hold'}
+sizemargin <- 1/sqrt(leafdata$marginvi)
+
+margintempplot <- ggplot(leafdata, aes(Changeavtemp, marginLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizemargin*0.5) +
+  geom_abline(slope = 0.0472, intercept = 0.0276, colour="lightsalmon3", size = 2) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=15, x="", y= expression(paste("Change in leaf margin complexity\n        [width:length (cm²/cm)]"))) +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_blank())
+plot(margintempplot)
+
+marginprecipplot <- ggplot(leafdata, aes(Changeav, marginLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizemargin*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=8, x="", y= "") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text = element_blank())
+plot(marginprecipplot)
+```
+
+4. Plots for both relationships of leaf thickness (NB the x axis labels finally appear here because these will be the bottom of the panel)
+
+```{r, warning = FALSE, out.width=c('50%', '50%'), fig.show='hold'}
+sizethickness <- 1/sqrt(leafdata$thicknessvi)
+thicknesstempplot <- ggplot(leafdata, aes(Changeavtemp, thickLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizethickness*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=20, x="Change in mean temperature (°C)", y= "Change in leaf thickness (mm)") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text = element_text(size=18)) +
+  theme(axis.title.x = element_text(size=26))
+plot(thicknesstempplot)
+thicknessprecipplot <- ggplot(leafdata, aes(Changeav, thickLRR)) + 
+  geom_point(colour="darkseagreen4", size=sizethickness*0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  labs(cex=20, x="Change in mean precipitation (mm)", y= "") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.x = element_text(size=18)) +
+  theme(axis.title.x = element_text(size=26)) +
+  theme(axis.text.y = element_blank())
+plot(thicknessprecipplot)
+```
+
+Join all plots together and save as tiff 
+
+```{r figure1, dev = "png", fig.width = 12, fig.height=18, warning = FALSE}
+figure1 <- grid.arrange(leafareatempplot, leafareaprecipplot,
+                        roundnesstempplot, roundnessprecipplot,
+                        margintempplot, marginprecipplot,
+                        thicknesstempplot, thicknessprecipplot, ncol=2)
+
+ggsave(
+  "figure1.tiff",
+  plot=figure1,
+  device = "tiff",
+  width=12,
+  height=16,
+  dpi=200
+)
+
+```
+

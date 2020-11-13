@@ -1,0 +1,77 @@
+---
+title: "PCA analyses for leaf economics traits"
+author: "Suz Everingham"
+date: "22 June 2020"
+output: 
+  html_document:
+    keep_md: yes
+    fig_crop: no
+    highlight: zenburn
+    theme: flatly
+---
+libraries required
+
+```{r}
+library(missMDA)
+library(FactoMineR)
+library(dplyr)
+library(tidyr)
+```
+
+Reading in Data created previously in rmarkdown 
+```{r}
+leafdata <- read.csv("leafdatafull.csv")
+```
+
+Create a dataframe with just the three variables to see where the NAs lie 
+
+```{r}
+leafeconomicdata <- leafdata[c("Species", "Changeavtemp", "Changetempvar", "Changetemprange", "Changeav", "Changevar", "Changerange", "Changedrought", "Changemaxseasonal", "Changeminseasonal", "Changeheatwave", "Changevpd", "Changemaxdryspell", "photoLRR.x", "photosynthesisvi", "lmainverseLRR.x", "lmainversevi", "nitrogenLRR.x","nitrogenvi")]
+```
+
+A few species have no data at all (due to lack of germination or death in glasshouse). These species we will remove as they are of no use in a PCA. There are 8 species that need some data imputation, which isn't too bad.
+
+Create a wide data frame so that each species gets a PCA for the three variables
+
+```{r}
+#select the data of species and the three traits
+
+leafeconomicPCAdata1 <- leafdata[c("Species", "photoLRR.x", "nitrogenLRR.x", "lmainverseLRR.x")]
+
+```
+
+Now I want to remove the species that have NAs across all three leaf economic traits - these cannot be imputed and do not contribute any data
+
+```{r}
+
+leafeconomicPCAdataspecies <- filter(leafeconomicPCAdata1, Species != "Acacia aneura" & Species != "Acronychia imperforata" & Species != "Allocasuarina monilifera" & Species != "Austrostipa densiflora" & Species != "Callitris glaucophylla" & Species != "Crowea exalata" & Species != "Eucalyptus fastigata" & Species != "Eucalyptus langleyi" & Species != "Eucalyptus pauciflora" & Species != "Gompholobium latifolium" & Species != "Grevillea mucronulata" & Species != "Polycalymma stuartii" & Species != "Xerochrysum viscosum")
+
+leafeconomicPCAdatafinal <- leafeconomicPCAdataspecies %>% select(2:4) ## selecting only the numeric columns
+```
+
+
+Run a PCA analysis on the leaf economic trait variables - photosynthesis, LMA (inverse- as it decreases as leaf economic traits increase) and leaf nitrogen content
+
+```{r}
+leafeconomicPCAimputed <- imputePCA(leafeconomicPCAdatafinal)
+
+leafeconomi.PCA <- prcomp(t(leafeconomicPCAimputed$completeObs))
+
+plot(leafeconomi.PCA)
+summary(leafeconomi.PCA)
+str(leafeconomi.PCA)
+
+```
+
+Save that PCA analysis as a dataframe and bind with the species names and data 
+
+```{r}
+leafeconomics <- cbind(leafeconomicPCAdataspecies,leafeconomi.PCA$rotation)
+```
+
+save that data as a csv to use in further analysis
+
+```{r}
+write.csv(leafeconomics, "leafeconomics.csv")
+```
+

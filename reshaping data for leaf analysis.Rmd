@@ -1,0 +1,186 @@
+---
+title: "Getting data for leaf trait analysis"
+author: "Susan E Everingham"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+Libraries required
+```{r}
+library(plyr)
+library(dplyr)
+library(reshape2)
+library(data.table)
+library(metafor)
+```
+
+Read in data
+
+```{r}
+lma <- read.csv("LMA.csv") %>%
+  mutate(lmainverse = 1/LMA.g.m)
+leafdimensions <- read.csv("leafdims.csv") %>%
+  dplyr::rename(Species = Label)
+leafmargincomplexity <- read.csv("Leafmargincomplexity.csv")%>%
+  dplyr::rename(Species = Label)
+leafthickness <- read.csv("Leafthickness.csv") %>%
+  mutate(thickness = rowMeans(.[ , c("Thick1","Thick2", "Thick3", "Thick4")], na.rm=TRUE))
+photosynthesis <- read.csv("Photosynthesis.csv") %>%
+  mutate(WUE = Photo/Cond)
+nitrogencarbon <- read.csv("carbontonitrogen.csv") %>%
+  dplyr::rename(ModOld = X)
+stomata <- read.csv("stomata.csv")
+leafeconomics <- read.csv("leafeconomics.csv")
+tempdata <- read.csv("temperature_data_SuzEveringham.csv")
+precipdata <- read.csv("precipitation_data_SuzEveringham.csv")
+heatwavedata <- read.csv("heatwave_duration_data_SuzEveringham.csv")
+aridityandvpddata <- read.csv("aridityandvpddata.csv", header=T)
+CO2data <- read.csv("CO2.csv")
+```
+
+Tidying data for leaf area
+
+```{r}
+leafarea1 <- ddply(lma, c("Species", "ModOld"), summarise,  
+      avg.area = mean(LeafArea), areaSD = sd(LeafArea), areanumber = dplyr::n())
+
+leafarea2 <- dcast(setDT(leafarea1), Species ~ ModOld, value.var = c("avg.area", "areaSD", "areanumber")) %>%
+  mutate(areaLRR = log(avg.area_Mod/avg.area_Old))
+
+leafarea <- escalc(measure="ROM", n1i = areanumber_Mod, n2i = areanumber_Old, m1i = avg.area_Mod, m2i = avg.area_Old, sd1i = areaSD_Mod, sd2i = areaSD_Old, data = leafarea2)
+
+```
+
+Tidying data for leaf width:length ratio
+
+```{r}
+leafdimensionratio1 <- ddply(leafdimensions, c("Species", "ModOld"), summarise,  
+      avg.dimensions = mean(dimensionsratio), dimensionsSD = sd(dimensionsratio), 
+      dimensionsnumber = dplyr::n())
+
+leafdimensionsratio2 <- dcast(setDT(leafdimensionratio1), Species ~ ModOld, value.var = c("avg.dimensions", "dimensionsSD", "dimensionsnumber")) %>%
+  mutate(dimensionsLRR = log(avg.dimensions_Mod/avg.dimensions_Old))
+
+leafdimensionsratio <- escalc(measure="ROM", n1i = dimensionsnumber_Mod, n2i = dimensionsnumber_Old, m1i = avg.dimensions_Mod, m2i = avg.dimensions_Old, sd1i = dimensionsSD_Mod, sd2i = dimensionsSD_Old, data = leafdimensionsratio2)
+
+```
+
+Tidying data for Leaf margin complexity
+
+```{r}
+margincomplexity1 <- ddply(leafmargincomplexity, c("Species", "ModOld"), summarise,  
+      avg.margin = mean(margincomplexity), marginSD = sd(margincomplexity), marginnumber = dplyr::n())
+
+margincomplexity2 <- dcast(setDT(margincomplexity1), Species ~ ModOld, value.var = c("avg.margin", "marginSD", "marginnumber")) %>%
+  mutate(marginLRR = log(avg.margin_Mod/avg.margin_Old))
+
+margincomplexity <- escalc(measure="ROM", n1i = marginnumber_Mod, n2i = marginnumber_Old, m1i = avg.margin_Mod, m2i = avg.margin_Old, sd1i = marginSD_Mod, sd2i = marginSD_Old, data = margincomplexity2)
+```
+
+
+
+Tidying data for LMA
+
+```{r}
+LMA1 <- ddply(lma, c("Species", "ModOld"), summarise,  
+      avg.lma = mean(LMA.g.m), lmaSD = sd(LMA.g.m), lmanumber = dplyr::n())
+
+LMA2 <- dcast(setDT(LMA1), Species ~ ModOld, value.var = c("avg.lma", "lmaSD", "lmanumber")) %>%
+  mutate(lmaLRR = log(avg.lma_Mod/avg.lma_Old))
+
+LMA <- escalc(measure="ROM", n1i = lmanumber_Mod, n2i = lmanumber_Old, m1i = avg.lma_Mod, m2i = avg.lma_Old, sd1i = lmaSD_Mod, sd2i = lmaSD_Old, data = LMA2)
+
+```
+
+ALSO creating a variable that is the inverse of LMA as leaf economic theory suggests that there is a spectra that moves to "faster" leaf investment with INCREASES in Photosynthesis, INCREASES in Nitrogen but decreases in LMA (so we should see an INCREASE in the inverse of LMA). Then creating the log response ratios from this inverse of LMA
+
+```{r}
+lmainverse1 <- ddply(lma, c("Species", "ModOld"), summarise,  
+      avg.lma.inverse = mean(lmainverse), lmainverseSD = sd(lmainverse), lmainversenumber = dplyr::n())
+
+lmainverse2 <- dcast(setDT(lmainverse1), Species ~ ModOld, value.var = c("avg.lma.inverse", "lmainverseSD", "lmainversenumber")) %>%
+  mutate(lmainverseLRR = log(avg.lma.inverse_Mod/avg.lma.inverse_Old))
+
+lmainverse <- escalc(measure="ROM", n1i = lmainversenumber_Mod, n2i = lmainversenumber_Old, m1i = avg.lma.inverse_Mod, m2i = avg.lma.inverse_Old, sd1i = lmainverseSD_Mod, sd2i = lmainverseSD_Old, data = lmainverse2)
+```
+
+
+Tidying data for leaf thickness
+
+```{r}
+Leafthickness1 <- ddply(leafthickness, c("Species", "ModOld"), summarise,  
+      avg.thickness = mean(thickness), thickSD = sd(thickness), thicknumber = dplyr::n())
+
+Leafthickness2 <- dcast(setDT(Leafthickness1), Species ~ ModOld, value.var = c("avg.thickness", "thickSD", "thicknumber")) %>%
+  mutate(thickLRR = log(avg.thickness_Mod/avg.thickness_Old))
+
+Leafthickness <- escalc(measure="ROM", n1i = thicknumber_Mod, n2i = thicknumber_Old, m1i = avg.thickness_Mod, m2i = avg.thickness_Old, sd1i = thickSD_Mod, sd2i = thickSD_Old, data = Leafthickness2)
+```
+
+
+Tidying data for stomata
+
+```{r}
+stomata1 <- ddply(stomata, c("Species", "ModOld"), summarise,  
+      avg.stomata = mean(Averagestom), stomataSD = sd(Averagestom), stomatanumber = dplyr::n())
+
+stomata2 <- dcast(setDT(stomata1), Species ~ ModOld, value.var = c("avg.stomata", "stomataSD", "stomatanumber")) %>%
+  mutate(stomataLRR = log(avg.stomata_Mod/avg.stomata_Old))
+
+stomata <- escalc(measure="ROM", n1i = stomatanumber_Mod, n2i = stomatanumber_Old, m1i = avg.stomata_Mod, m2i = avg.stomata_Old, sd1i = stomataSD_Mod, sd2i = stomataSD_Old, data = stomata2)
+```
+
+
+```{r}
+photosynthesis1 <- ddply(photosynthesis, c("Species", "ModOld"), summarise,  
+      avg.photo = mean(Photo), photoSD = sd(Photo), photonumber = dplyr::n())
+
+photosynthesis2 <- dcast(setDT(photosynthesis1), Species ~ ModOld, value.var = c("avg.photo", "photoSD", "photonumber")) %>%
+  mutate(photoLRR = log(avg.photo_Mod/avg.photo_Old))
+
+photosynthesisdata <- escalc(measure="ROM", n1i = photonumber_Mod, n2i = photonumber_Old, m1i = avg.photo_Mod, m2i = avg.photo_Old, sd1i = photoSD_Mod, sd2i = photoSD_Old, data = photosynthesis2)
+```
+
+Tidying nitrogen data - note that it is slightly different because there is only one number for every replicate because the leaves were pooled together (cost reasons).
+
+```{r}
+nitrogen1 <- ddply(nitrogencarbon, c("Species", "ModOld", "X.N"), summarise, nitrogenSD = (X.N)*0, nitrogennumber = dplyr::n()) #just trying to do a trick to make                                                     SD = 0 to work in metafor,                                                            otherwise doing SD normally gives                                                     NAs
+
+nitrogen2 <- dcast(setDT(nitrogen1), Species ~ ModOld, value.var = c("X.N", "nitrogenSD", "nitrogennumber")) %>%
+  mutate(nitrogenLRR = log(X.N_Mod/X.N_Old))
+
+nitrogen <- escalc(measure="ROM", n1i = nitrogennumber_Mod, n2i = nitrogennumber_Old, m1i = X.N_Mod, m2i = X.N_Old, sd1i = nitrogenSD_Mod, sd2i = nitrogenSD_Old, data = nitrogen2)
+
+nitrogen$vi <- nitrogen$vi + 1 ##metafor handles a constant number of 1 for variance                                    #but wont really handle a constant variance of 0
+```
+
+Tidying data for water use efficiency
+
+```{r}
+WUE1 <- ddply(photosynthesis, c("Species", "ModOld"), summarise,  
+      avg.WUE = mean(WUE), WUESD = sd(WUE), WUEnumber = dplyr::n())
+
+WUE2 <- dcast(setDT(WUE1), Species ~ ModOld, value.var = c("avg.WUE", "WUESD", "WUEnumber")) %>%
+  mutate(WUELRR = log(avg.WUE_Mod/avg.WUE_Old))
+
+WUE <- escalc(measure="ROM", n1i = WUEnumber_Mod, n2i = WUEnumber_Old, m1i = avg.WUE_Mod, m2i = avg.WUE_Old, sd1i = WUESD_Mod, sd2i = WUESD_Old, data = WUE2)
+
+```
+
+
+
+Stitch all the dataframes together and with climate change data
+
+```{r}
+suzdata <- list(tempdata, precipdata, heatwavedata, aridityandvpddata, CO2data, Leafthickness, LMA, lmainverse, margincomplexity, leafdimensionsratio, stomata, leafarea, photosynthesisdata, nitrogen, WUE, leafeconomics) %>%
+  purrr::reduce(left_join, by = "Species") %>%
+  rename(thicknessvi = vi.x, lmavi = vi.y, lmainversevi = vi.x.x, marginvi = vi.y.y, roundnessvi = vi.x.x.x, stomatavi = vi.y.y.y, areavi = vi.x.x.x.x, photosynthesisvi = vi.y.y.y.y, nitrogenvi = vi.x.x.x.x.x, WUEvi = vi.y.y.y.y.y)
+```
+
+write a csv file for further analyses
+
+```{r}
+write.csv(suzdata, "leafdatafull.csv")
+```
+

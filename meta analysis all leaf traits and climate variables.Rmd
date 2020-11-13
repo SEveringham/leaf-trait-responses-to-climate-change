@@ -1,0 +1,270 @@
+---
+title: "meta-analyses of leaf traits and climate variables"
+author: "Suz"
+date: "23 July 2020"
+output: html_document
+---
+
+libraries required
+
+```{r}
+library(metafor)
+library(glmulti)
+library(ggplot2)
+library(gridExtra)
+```
+
+read in data
+
+```{r}
+leafdata <- read.csv("leafdatafull.csv")
+```
+
+Create create function for rma.glmulti- rma with yi and vi
+
+```{r}
+rma.glmulti <- function(formula, vi, data, ...) {
+  rma(as.formula(paste(deparse(formula))), vi=vi, data=data, method = "ML", ...)
+}
+```
+
+Also create a function for getting the moderator importance and significance averaged across all models
+```{r}
+setMethod('getfit', 'rma.uni', function(object, ...){
+  if (object$test == "z") {
+    cbind(estimate = coef(object), se = sqrt(diag(vcov(object))), df= 10000)
+  } else {
+    cbind(estimate = coef(object), se = sqrt(diag(vcov(object))), df= object$k - object$p)
+  }
+})
+```
+
+
+Run meta-analytic multi-model selection on each leaf trait and leaf ecnomics against all climate variables
+
+1. Leaf area
+```{r}
+leafareamodelselection <- glmulti(areaLRR ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = leafdata$areavi, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(leafareamodelselection@objects[[1]])
+print(leafareamodelselection)
+plot(leafareamodelselection)
+
+mmi <- as.data.frame(coef(leafareamodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+2. Leaf roundness
+
+```{r}
+leafroundnessmodelselection <- glmulti(dimensionsLRR ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = leafdata$roundnessvi, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(leafroundnessmodelselection@objects[[1]])
+print(leafroundnessmodelselection)
+plot(leafroundnessmodelselection)
+
+mmi <- as.data.frame(coef(leafroundnessmodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+3. Margin complexity
+
+```{r}
+leafmarginmodelselection <- glmulti(marginLRR ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = leafdata$marginvi, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(leafmarginmodelselection@objects[[1]])
+print(leafmarginmodelselection)
+plot(leafmarginmodelselection)
+
+mmi <- as.data.frame(coef(leafmarginmodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+4. Leaf thickness
+
+```{r}
+leafthicknessmodelselection <- glmulti(thickLRR ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = leafdata$thicknessvi, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(leafthicknessmodelselection@objects[[1]])
+print(leafthicknessmodelselection)
+plot(leafthicknessmodelselection)
+
+mmi <- as.data.frame(coef(leafthicknessmodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+5. Photosynthetic rate
+
+```{r}
+photosynthesismodelselection <- glmulti(photoLRR.x ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = leafdata$photosynthesisvi, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(photosynthesismodelselection@objects[[1]])
+print(photosynthesismodelselection)
+plot(photosynthesismodelselection)
+
+mmi <- as.data.frame(coef(photosynthesismodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+6. Water use efficiency
+
+```{r}
+WUEmodelselection <- glmulti(WUELRR ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = leafdata$WUEvi, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(WUEmodelselection@objects[[1]])
+print(WUEmodelselection)
+plot(WUEmodelselection)
+
+mmi <- as.data.frame(coef(WUEmodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+7. Stomatal density
+
+```{r}
+stomatamodelselection <- glmulti(stomataLRR ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = leafdata$stomatavi, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(stomatamodelselection@objects[[1]])
+print(stomatamodelselection)
+plot(stomatamodelselection)
+
+mmi <- as.data.frame(coef(stomatamodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+8 (and final). leaf economics
+
+```{r}
+leafeconomicsmodelselection <- glmulti(PC1 ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = 1, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(leafeconomicsmodelselection@objects[[1]])
+print(leafeconomicsmodelselection)
+plot(leafeconomicsmodelselection)
+
+mmi <- as.data.frame(coef(leafeconomicsmodelselection))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+Plotting the two leaf margin relationships that came out significant
+
+```{r}
+leafmarginandtempvar <- rma(yi=marginLRR, vi = marginvi, mods = Changetempvar, data=leafdata)
+print(leafmarginandtempvar)
+
+#slope = 2.5664
+#intercept = 0.0049
+
+sizemargin <- 1/sqrt(leafdata$marginvi)
+
+margintempvarplot <- ggplot(data=leafdata, aes(Changetempvar, y=marginLRR)) + 
+  geom_point(colour="lightsalmon3", size=sizemargin*0.5) +
+  labs(cex=15, x="", y= expression(paste("Change in leaf margin complexity\n[width:length (cm²/cm)]"))) +
+   geom_abline(slope=2.5664, intercept=0.0049, colour="darkseagreen4", size = 2) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_text(size=18)) +
+  theme(axis.text.x = element_text(size=18))
+plot(margintempvarplot)
+
+## and now leaf margin nad dry spell duration
+leafmarginanddryspell <- rma(yi=marginLRR, vi = marginvi, mods = Changemaxdryspell, data=leafdata)
+print(leafmarginanddryspell)
+
+#slope = -0.0490
+#intercept = 0.0209
+
+margindryspellplot <- ggplot(leafdata, aes(Changemaxdryspell, marginLRR)) + 
+  geom_point(colour="lightsalmon3", size=sizemargin*0.5) +
+  labs(cex=15, x="Dry spell", y= "") +
+   geom_abline(slope=-0.0490, intercept=0.0209, colour="darkseagreen4", size = 2) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
+  theme_bw() +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line = element_line(color="black", size = 0.5)) +
+  theme(axis.text.y = element_blank()) +
+  theme(axis.text.x = element_text(size=18))
+plot(margindryspellplot)
+
+```
+
+Join all the graphs together and save as tiff
+
+```{r}
+figure4 <- grid.arrange(margintempvarplot, margindryspellplot, ncol=2)
+
+ggsave(
+  "figure4.tiff",
+  plot=figure4,
+  device = "tiff",
+  width=16,
+  height=6,
+  dpi=200
+)
+```
+
