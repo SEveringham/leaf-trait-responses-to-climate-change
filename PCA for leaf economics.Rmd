@@ -16,6 +16,7 @@ library(missMDA)
 library(FactoMineR)
 library(dplyr)
 library(tidyr)
+library(paran)
 ```
 
 Reading in Data created previously in rmarkdown 
@@ -61,6 +62,12 @@ plot(leafeconomi.PCA)
 summary(leafeconomi.PCA)
 str(leafeconomi.PCA)
 
+```
+
+Check that I should only use PC1 using a parallel analysis of the PCA
+
+```{r}
+paran(leafeconomicPCAimputed$completeObs, iterations = 1000)
 ```
 
 Save that PCA analysis as a dataframe and bind with the species names and data 
