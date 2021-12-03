@@ -199,6 +199,25 @@ mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
 mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
 mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
 round(mmi, 4)
+
+#and again with principal component 2
+
+leafeconomicsmodelselection2 <- glmulti(PC2 ~ Changeavtemp + Changetemprange + Changetempvar + Changeav + Changerange + Changevar + Changemaxseasonal + Changeminseasonal + Changedrought + Changeheatwave + Changevpd + Changemaxdryspell + Changedrought, vi = 1, data=leafdata, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize = 8192)
+
+summary(leafeconomicsmodelselection2@objects[[1]])
+print(leafeconomicsmodelselection2)
+plot(leafeconomicsmodelselection2)
+
+mmi <- as.data.frame(coef(leafeconomicsmodelselection2))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+
 ```
 
 Plotting the two leaf margin relationships that came out significant
@@ -214,7 +233,7 @@ sizemargin <- 1/sqrt(leafdata$marginvi)
 
 margintempvarplot <- ggplot(data=leafdata, aes(Changetempvar, y=marginLRR)) + 
   geom_point(colour="lightsalmon3", size=sizemargin*0.5) +
-  labs(cex=15, x="", y= expression(paste("Change in leaf margin complexity\n[width:length (cm²/cm)]"))) +
+  labs(cex=15, x="", y= expression(paste("Change in leaf margin complexity\n[width:length (cmÂ²/cm)]"))) +
    geom_abline(slope=2.5664, intercept=0.0049, colour="darkseagreen4", size = 2) +
   geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
   geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.3, size=1) +
