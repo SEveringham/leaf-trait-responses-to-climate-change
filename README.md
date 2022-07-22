@@ -1,10 +1,7 @@
 # leaf-trait-responses-to-climate-change
 Analysis for responses of Australian plant leaf trait changes to changes in climate metrics
 
-# leaf-trait-responses-to-climate-change
-Analysis for responses of Australian plant leaf trait changes to changes in climate metrics
-
-This analysis is for the mansucript entitled: XXX
+This analysis is for the mansucript entitled: Leaf morphological traits show greater responses to changes in climate than leaf physiological traits and gas exchange variables
 
 Data will be made freely available upon publication
 
