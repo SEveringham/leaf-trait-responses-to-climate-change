@@ -1,0 +1,38 @@
+---
+title: "analysis of growth form and leaf traits"
+author: "Suz"
+date: "22 July 2022"
+output: html_document
+---
+
+Libraries required
+
+```{r}
+library(dplyr)
+```
+
+Read in relevant data
+
+```{r}
+growthformdata <- read.csv("growthform.csv")
+leaftraitdata <- read.csv("leafdatafull.csv")
+```
+
+Stitch these two dataframes together and clean so that we have a dataframe that is just the log response ratios of each leaf trait for each species and their growth form. Also mutate a column for the mean trait change and the absolute mean trait change for the linear regression of this variable against growth form
+
+```{r}
+traitchangeandgrowthformdata <- left_join(growthformdata, leaftraitdata, by = "Species") %>%
+  select(Species, growthform, thickLRR, lmaLRR, marginLRR, dimensionsLRR, stomataLRR, areaLRR, photoLRR, nitrogenLRR, WUELRR) %>%
+  mutate(averagetraitchange = rowMeans(.[,c("thickLRR", "lmaLRR", "marginLRR", "dimensionsLRR", "stomataLRR", "areaLRR", "photoLRR", "nitrogenLRR", "WUELRR")], na.rm=T)) %>% #making an average trait change
+  mutate(absoluteaveragetraitchange = abs(averagetraitchange)) %>% #and making an ABSOLUTE average trait change
+  filter(!is.na(averagetraitchange)) #removing the species that had no data at all in this study - they may have been germinated and used in previous studies (e.g. Everingham et al 2021, Time travelling seeds reveal that plant regeneration and growth traits are responding to climate change, ECOLOGY, 2021)
+```
+
+
+Now running an analyis of growth form against average leaf trait change
+
+```{r}
+growthformlm <- lm(log(absoluteaveragetraitchange) ~ growthform, data = traitchangeandgrowthformdata) #absolute trait change is logged because of non-normally distributed data
+summary(growthformlm)
+```
+
