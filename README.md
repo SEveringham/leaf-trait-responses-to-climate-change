@@ -5,7 +5,7 @@ This analysis is for the mansucript entitled: Leaf morphological traits show gre
 
 Data will be made freely available upon publication
 
-There are XX datasets and XX analysis scripts available
+There are 5 datasets (available on dryad) and 3 analysis scripts available
 
 The 1st Rmarkdown file: "reshaping data for leaf analysis" takes all the raw data of measured leaf traits and creates a dataframe (and csv file) with all trait responses (calculated as the log odds response ratio of means) and all variances for trait changes with all changes in climate metrics (calculated as the difference between years for temperature metrics and the log odds repsonse ratio of means for precipitation metrics)
 
