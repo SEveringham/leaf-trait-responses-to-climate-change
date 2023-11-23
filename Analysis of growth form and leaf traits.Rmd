@@ -36,3 +36,119 @@ growthformlm <- lm(log(absoluteaveragetraitchange) ~ growthform, data = traitcha
 summary(growthformlm)
 ```
 
+Creating a map of our species with growth form and absolute change mapped onto these points - this was asked by reviewer for Ecology and Evolution
+
+
+First constructing australian map as the background canvas of the map
+
+```{r}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+ausplot <- ggplot(data = world) +
+  geom_sf(color = "white", size = 0.1, fill = "#bcc99c") +
+  theme_classic()+
+  theme(axis.line = element_line(colour = "white")) +
+  coord_sf(xlim = c(110, 155), ylim = c(-45, -10.5), expand = FALSE)
+ausplot
+
+#save australia plot to create figure
+ggsave(
+  "australiamap.tiff",
+  plot=ausplot,
+  device = "tiff",
+  width=10,
+  height=8,
+  dpi=200
+)
+
+ausplotzoomed <- ggplot(data = world) +
+  geom_sf(color = "white", size = 0.1, fill = "#bcc99c") +
+  theme_classic()+
+  theme(axis.line = element_line(colour = "white")) +
+  coord_sf(xlim = c(131, 155), ylim = c(-45, -25), expand = FALSE)
+ausplotzoomed
+```
+
+### Then constructing Australian map with sites
+
+```{r, warning=FALSE}
+LeafChapterMapwithspecies <- ausplotzoomed +
+  geom_point(data = traitchangeandgrowthformdata, aes(x= `Lon`, y = `Lat`, color = growthform, shape = growthform, size = (absoluteaveragetraitchange)), alpha = 0.8) +
+  scale_size_continuous(range = c(2, 10)) +
+  scale_shape_manual(values =c(15,16,17,18)) +
+  scale_color_manual(values=c("darkseagreen4", "lightsalmon3", "deepskyblue4", "firebrick4"))
+
+LeafChapterMapwithspecies
+
+#save plot 
+ggsave(
+  "leafchaptermap.tiff",
+  plot=LeafChapterMapwithspecies,
+  device = "tiff",
+  width=10,
+  height=8,
+  dpi=200
+)
+```
+
+The editor of ecology and evolution also asked if our growth form analysis can consider generation time to determine if generation time has an impact on the amount of change a species can have- I believe there is limited data on generation time specifically but have a dataset from TRY of generation time
+
+```{r}
+generationtimeTRY <- read.delim("30063.txt") %>%
+  rename(Species = SpeciesName)
+
+generationtimeourspecies <- left_join(traitchangeandgrowthformdata, generationtimeTRY, by = "Species") %>%
+  select(Species, OrigValueStr)
+```
+
+From looking at this dataset we can see we only have data on nine species: Bothriochloa macra, Senecio garlandii, Vittadinia cuneata (all herbs with <1 year to repro maturity), Allocasuarina nana, Melaleuca quinquenervia, Eucalyptus obliqua, Acacia baileyana, Allocasuarina littoralis and Acacia dealbata
+<br>
+Likewise, this data is not so accurate with many "X-Xyears" or "<Xyears" in these nine species - not that clear to use
+
+
+Let's also try Austraits
+
+```{r}
+# load austraits
+austraits <- load_austraits(version = "5.0.0", path = "data/austraits", update = TRUE)
+
+# find traits for generation time or maturity or life span
+lookup_trait(austraits, "matur") %>% head() #swap "matur" with lifespan or repro or otherwise
+
+# from a quick look we can use "reproductive_maturity" and "lifespan"
+# pull these traits from aus traits
+data_repro_matur <- extract_trait(austraits, "reproductive_maturity") 
+data_lifespan <- extract_trait(austraits, "lifespan")
+
+# get traits for just our species 
+data_repro_matur <- data_repro_matur$traits %>%
+  rename(Species = taxon_name)
+data_lifespan <- data_lifespan$traits %>%
+  rename(Species = taxon_name)
+
+#
+austraits_our_data <- left_join(traitchangeandgrowthformdata, data_repro_matur, by = "Species") %>%
+  left_join(., data_lifespan, by = "Species") %>%
+  group_by(Species) %>%
+  summarise(mean_repro_maturity = mean(value.x, na.rm = T),
+            mean_lifespan = mean(value.y, na.rm = T)) %>%
+  mutate(Reference = "AusTraits")
+
+#so there are some more data from austraits but only 13 species
+```
+
+Now we combine what data we have from austraits, supplemented with any extra trait measures from TRY and run the same analyses to see if it impacts the amount of trait change
+
+```{r}
+repro_maturity_full <- left_join(traitchangeandgrowthformdata, austraits_our_data, by = "Species") %>%
+  mutate(mean_repro_maturity = ifelse(Species == "Vittadinia cuneata", 1, mean_repro_maturity)) %>%
+  mutate(Reference = ifelse(Species == "Vittadinia cuneata", "TRY", Reference)) #only extra measure from try is this one vittadinia species
+```
+
+Now run regression
+```{r}
+repro_maturity_trait_change <- lm(log(absoluteaveragetraitchange) ~ log(mean_repro_maturity), data = repro_maturity_full)
+summary(repro_maturity_trait_change)
+#still not significant - but not many measurements - and relationship (R squared) not strong either - no pattern
+```
+
