@@ -76,7 +76,9 @@ LeafChapterMapwithspecies <- ausplotzoomed +
   geom_point(data = traitchangeandgrowthformdata, aes(x= `Lon`, y = `Lat`, color = growthform, shape = growthform, size = (absoluteaveragetraitchange)), alpha = 0.8) +
   scale_size_continuous(range = c(2, 10)) +
   scale_shape_manual(values =c(15,16,17,18)) +
-  scale_color_manual(values=c("darkseagreen4", "lightsalmon3", "deepskyblue4", "firebrick4"))
+  scale_color_manual(values=c("darkseagreen4", "lightsalmon3", "deepskyblue4", "firebrick4")) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
 
 LeafChapterMapwithspecies
 
